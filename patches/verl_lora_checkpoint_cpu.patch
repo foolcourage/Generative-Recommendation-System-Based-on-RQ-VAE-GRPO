@@ -1,0 +1,42 @@
+diff --git a/verl/utils/checkpoint/fsdp_checkpoint_manager.py b/verl/utils/checkpoint/fsdp_checkpoint_manager.py
+index 2e2f36d..0e4b36f 100644
+--- a/verl/utils/checkpoint/fsdp_checkpoint_manager.py
++++ b/verl/utils/checkpoint/fsdp_checkpoint_manager.py
+@@ -283,12 +283,22 @@ class FSDPCheckpointManager(BaseCheckpointManager):
+                 extra_path = os.path.join(local_path, f"extra_state_world_size_{self.world_size}_rank_{self.rank}.pt")
+ 
+                 if self.should_save_model:
+-                    model_state_dict = self.model.state_dict()
+                     if self.should_save_lora_only and self._has_lora():
+-                        n_total = len(model_state_dict)
+-                        model_state_dict = {
+-                            k: v for k, v in model_state_dict.items() if "lora_" in k or ".adapter_" in k
+-                        }
++                        # Do not build the full FSDP state dict before filtering:
++                        # on one GPU that clones the entire base model and can OOM
++                        # while a colocated vLLM server owns rollout weights.
++                        with FSDP.summon_full_params(self.model, writeback=False):
++                            named_parameters = list(self.model.named_parameters())
++                            # Copy while summon_full_params is active; after the context
++                            # parameters may be restored as sharded DTensors.
++                            n_total = len(named_parameters)
++                            model_state_dict = {}
++                            for name, param in named_parameters:
++                                if "lora_" not in name and ".adapter_" not in name:
++                                    continue
++                                clean_name = name.replace("._fsdp_wrapped_module.", ".").removeprefix("_fsdp_wrapped_module.")
++                                value = param.full_tensor() if hasattr(param, "full_tensor") else param
++                                model_state_dict[clean_name] = value.detach().to(device="cpu", copy=True)
+                         if not model_state_dict:
+                             raise ValueError(
+                                 f"save_lora_only is True and the model has a peft_config, "
+@@ -309,6 +319,8 @@ class FSDPCheckpointManager(BaseCheckpointManager):
+                             logger=logger,
+                             log_only_rank_0=True,
+                         )
++                    else:
++                        model_state_dict = self.model.state_dict()
+                     torch.save(model_state_dict, model_path)
+                     log_with_rank(f"Saved model to {os.path.abspath(model_path)}", rank=self.rank, logger=logger)
+ 
+

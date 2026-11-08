@@ -1,0 +1,35 @@
+model_name_or_path: Qwen/Qwen2.5-1.5B-Instruct
+train_file: data/processed/all_beauty/sft_train.jsonl
+eval_file: data/processed/all_beauty/sft_val.jsonl
+output_dir: outputs/sft/smoke-qwen2.5-1.5b
+max_length: 768
+max_train_samples: 64
+max_eval_samples: 16
+num_train_epochs: 1.0
+max_steps: 2
+per_device_train_batch_size: 1
+per_device_eval_batch_size: 1
+gradient_accumulation_steps: 2
+learning_rate: 0.0002
+warmup_ratio: 0.0
+weight_decay: 0.01
+logging_steps: 1
+save_steps: 2
+eval_steps: 2
+save_total_limit: 1
+seed: 42
+gradient_checkpointing: true
+bf16: true
+tf32: true
+flash_attention_2: false
+optim: paged_adamw_8bit
+lora_rank: 8
+lora_alpha: 16
+lora_dropout: 0.05
+lora_target_modules: [q_proj, k_proj, v_proj, o_proj, gate_proj, up_proj, down_proj]
+quantization:
+  load_in_4bit: true
+  bnb_4bit_quant_type: nf4
+  bnb_4bit_use_double_quant: true
+  bnb_4bit_compute_dtype: bfloat16
+

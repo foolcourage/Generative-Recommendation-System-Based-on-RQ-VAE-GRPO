@@ -1,0 +1,14 @@
+model_name_or_path: Qwen/Qwen2.5-3B-Instruct
+adapter_path: outputs/sft/qwen2.5-3b-all-beauty
+test_file: data/processed/all_beauty/test.jsonl
+output_file: outputs/evaluation/sft_test_predictions.jsonl
+metrics_file: outputs/evaluation/sft_metrics.json
+top_k: 10
+max_samples: 1000
+max_input_length: 896
+max_new_tokens: 128
+batch_size: 1
+temperature: 0.0
+load_in_4bit: true
+seed: 42
+

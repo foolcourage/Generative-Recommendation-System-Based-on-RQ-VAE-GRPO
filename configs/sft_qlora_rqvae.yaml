@@ -1,0 +1,42 @@
+# OOM-safe QLoRA SFT over RQ-VAE Semantic IDs.
+model_name_or_path: Qwen/Qwen2.5-3B-Instruct
+train_file: data/processed/all_beauty_rqvae/sft_train.jsonl
+eval_file: data/processed/all_beauty_rqvae/sft_val.jsonl
+output_dir: outputs/sft/qwen2.5-3b-all-beauty-rqvae
+max_length: 896
+max_train_samples: null
+max_eval_samples: 512
+num_train_epochs: 1.0
+max_steps: -1
+per_device_train_batch_size: 1
+per_device_eval_batch_size: 1
+gradient_accumulation_steps: 16
+learning_rate: 0.0002
+warmup_ratio: 0.03
+weight_decay: 0.01
+logging_steps: 5
+save_steps: 100
+eval_steps: 100
+save_total_limit: 2
+seed: 42
+gradient_checkpointing: true
+bf16: true
+tf32: true
+flash_attention_2: false
+optim: paged_adamw_8bit
+lora_rank: 16
+lora_alpha: 32
+lora_dropout: 0.05
+lora_target_modules:
+  - q_proj
+  - k_proj
+  - v_proj
+  - o_proj
+  - gate_proj
+  - up_proj
+  - down_proj
+quantization:
+  load_in_4bit: true
+  bnb_4bit_quant_type: nf4
+  bnb_4bit_use_double_quant: true
+  bnb_4bit_compute_dtype: bfloat16

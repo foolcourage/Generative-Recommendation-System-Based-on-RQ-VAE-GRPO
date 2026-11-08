@@ -1,0 +1,21 @@
+# Full-catalog Semantic-ID retrieval. It ignores the 16-candidate lists used by
+# Qwen SFT/GRPO and retrieves directly from every item in semantic_ids.json.
+data_dir: data/processed/all_beauty_rqvae
+mapping_file: data/processed/all_beauty_rqvae/semantic_ids.json
+output_dir: outputs/global_retrieval
+num_levels: 3
+codebook_size: 16
+embedding_dim: 48
+hidden_dim: 96
+max_history_items: 20
+epochs: 120
+batch_size: 32
+learning_rate: 0.002
+weight_decay: 0.0001
+label_smoothing: 0.05
+beam_width: 32
+top_k: 20
+eval_every: 5
+patience: 8
+device: cpu
+seed: 42

@@ -1,0 +1,24 @@
+diff --git a/verl/utils/checkpoint/fsdp_checkpoint_manager.py b/verl/utils/checkpoint/fsdp_checkpoint_manager.py
+--- a/verl/utils/checkpoint/fsdp_checkpoint_manager.py
++++ b/verl/utils/checkpoint/fsdp_checkpoint_manager.py
+@@ -290,10 +290,12 @@
+                         with FSDP.summon_full_params(self.model, writeback=False):
+                             named_parameters = list(self.model.named_parameters())
+-                        n_total = len(named_parameters)
+-                        model_state_dict = {
+-                            name.replace("._fsdp_wrapped_module.", ".").removeprefix("_fsdp_wrapped_module."): (
+-                                param.full_tensor().detach().cpu() if hasattr(param, "full_tensor") else param.detach().cpu()
+-                            )
+-                            for name, param in named_parameters
+-                            if "lora_" in name or ".adapter_" in name
+-                        }
++                            # Copy while summon_full_params is active; after the context
++                            # parameters may be restored as sharded DTensors.
++                            n_total = len(named_parameters)
++                            model_state_dict = {}
++                            for name, param in named_parameters:
++                                if "lora_" not in name and ".adapter_" not in name:
++                                    continue
++                                clean_name = name.replace("._fsdp_wrapped_module.", ".").removeprefix("_fsdp_wrapped_module.")
++                                value = param.full_tensor() if hasattr(param, "full_tensor") else param
++                                model_state_dict[clean_name] = value.detach().to(device="cpu", copy=True)

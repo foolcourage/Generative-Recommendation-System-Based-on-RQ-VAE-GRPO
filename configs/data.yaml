@@ -1,0 +1,17 @@
+category: All_Beauty
+year: 2018
+raw_dir: data/raw
+output_dir: data/processed/all_beauty
+min_user_interactions: 5
+min_item_interactions: 5
+min_history_items: 2
+max_history_items: 10
+max_train_positions_per_user: 3
+candidate_size: 16
+top_k: 10
+title_max_chars: 64
+max_train_samples: 20000
+max_val_samples: 1000
+max_test_samples: 1000
+negative_sampling: mixed
+seed: 42

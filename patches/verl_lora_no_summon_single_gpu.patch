@@ -1,0 +1,10 @@
+diff --git a/verl/utils/checkpoint/fsdp_checkpoint_manager.py b/verl/utils/checkpoint/fsdp_checkpoint_manager.py
+--- a/verl/utils/checkpoint/fsdp_checkpoint_manager.py
++++ b/verl/utils/checkpoint/fsdp_checkpoint_manager.py
+@@
+-                        with FSDP.summon_full_params(self.model, writeback=False):
+-                            named_parameters = list(self.model.named_parameters())
++                        # FSDP NO_SHARD on one GPU already exposes complete
++                        # parameters. Calling summon_full_params here can
++                        # materialize a second full state and OOM beside vLLM.
++                        named_parameters = list(self.model.named_parameters())

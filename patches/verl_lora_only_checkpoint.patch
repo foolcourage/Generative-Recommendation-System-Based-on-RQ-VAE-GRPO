@@ -1,0 +1,45 @@
+diff --git a/verl/utils/checkpoint/fsdp_checkpoint_manager.py b/verl/utils/checkpoint/fsdp_checkpoint_manager.py
+--- a/verl/utils/checkpoint/fsdp_checkpoint_manager.py
++++ b/verl/utils/checkpoint/fsdp_checkpoint_manager.py
+@@ -286,29 +286,37 @@ class FSDPCheckpointManager(BaseCheckpointManager):
+ 
+                 if self.should_save_model:
+-                    model_state_dict = self.model.state_dict()
+                     if self.should_save_lora_only and self._has_lora():
+-                        n_total = len(model_state_dict)
++                        # Do not build the full FSDP state dict before filtering:
++                        # on one GPU that clones the entire base model and can OOM
++                        # while a colocated vLLM server owns rollout weights.
++                        with FSDP.summon_full_params(self.model, writeback=False):
++                            named_parameters = list(self.model.named_parameters())
++                        n_total = len(named_parameters)
+                         model_state_dict = {
+-                            k: v for k, v in model_state_dict.items() if "lora_" in k or ".adapter_" in k
++                            name.replace("._fsdp_wrapped_module.", ".").removeprefix("_fsdp_wrapped_module."): param.detach().to(device="cpu", copy=True)
++                            for name, param in named_parameters
++                            if "lora_" in name or ".adapter_" in name
+                         }
+                         if not model_state_dict:
+                             raise ValueError(
+                                 f"save_lora_only is True and the model has a peft_config, "
+                                 f"but no LoRA/adapter parameters were found in the state dict. "
+                                 f"Total params checked: {n_total}."
+                             )
+                         lora_bytes = 0
+                         for v in model_state_dict.values():
+                             if hasattr(v, "numel") and hasattr(v, "element_size"):
+                                 lora_bytes += v.numel() * v.element_size()
+                             elif hasattr(v, "local_shards"):
+                                 for shard in v.local_shards():
+                                     lora_bytes += shard.tensor.numel() * shard.tensor.element_size()
+                         lora_mib = lora_bytes / 1024**2
+                         log_with_rank(
+                             f"LoRA-only save: {len(model_state_dict)}/{n_total} params ({lora_mib:.1f} MiB)",
+                             rank=self.rank,
+                             logger=logger,
+                             log_only_rank_0=True,
+                         )
++                    else:
++                        model_state_dict = self.model.state_dict()
+                     torch.save(model_state_dict, model_path)
+                     log_with_rank(f"Saved model to {os.path.abspath(model_path)}", rank=self.rank, logger=logger)

@@ -1,0 +1,29 @@
+# CPU-safe RQ-VAE item Semantic ID training. This stage does not load Qwen.
+category: All_Beauty
+raw_dir: data/raw
+output_dir: data/processed/all_beauty_rqvae
+mapping_file: data/processed/all_beauty_rqvae/semantic_ids.json
+min_user_interactions: 5
+min_item_interactions: 5
+title_max_chars: 64
+feature_backend: hashing_tfidf
+feature_dim: 256
+feature_seed: 17
+hidden_dim: 128
+latent_dim: 32
+num_levels: 3
+codebook_size: 16
+epochs: 80
+batch_size: 32
+learning_rate: 0.001
+commitment_weight: 0.25
+codebook_weight: 1.0
+reconstruction_weight: 1.0
+# Try several deterministic residual-k-means initializations and keep the
+# collision-minimal code path assignment before comparing reconstruction loss.
+collision_refresh_attempts: 4
+# Last-resort raw-path collisions receive X<stable item hash>; this keeps the
+# public Semantic ID reversible without order-dependent X00/X01 renumbering.
+collision_suffix_bytes: 4
+device: cpu
+seed: 42

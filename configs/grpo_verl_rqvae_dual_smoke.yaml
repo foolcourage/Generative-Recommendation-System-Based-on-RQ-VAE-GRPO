@@ -1,0 +1,44 @@
+# One-step two-GPU smoke including a real LoRA-only checkpoint save.
+model_name_or_path: Qwen/Qwen2.5-3B-Instruct
+sft_adapter_path: outputs/sft/qwen2.5-3b-all-beauty-rqvae
+train_file: data/processed/all_beauty_rqvae/verl_train.parquet
+val_file: data/processed/all_beauty_rqvae/verl_val.parquet
+output_dir: outputs/grpo/smoke-qwen2.5-3b-rqvae-dual
+reward_function: src/llm4rec/training/rewards.py
+reference_mode: shared_frozen_base
+n_gpus_per_node: 2
+nnodes: 1
+tensor_model_parallel_size: 2
+group_size: 4
+train_batch_size: 4
+ppo_mini_batch_size: 4
+ppo_micro_batch_size_per_gpu: 1
+max_prompt_length: 928
+max_response_length: 96
+max_token_len_per_gpu: 1280
+total_epochs: 1
+total_training_steps: 1
+save_freq: 1
+test_freq: -1
+actor_learning_rate: 0.000003
+kl_loss_coef: 0.01
+entropy_coeff: 0.0
+lora_rank: 16
+lora_alpha: 32
+rollout_gpu_memory_utilization: 0.30
+rollout_max_num_seqs: 4
+temperature: 0.7
+top_p: 0.9
+seed: 42
+logger: console
+memory:
+  actor_param_offload: false
+  actor_optimizer_offload: true
+  ref_param_offload: true
+  layered_summon: true
+  save_lora_only: true
+  gradient_checkpointing: true
+  remove_padding: false
+  free_cache_engine: true
+  enforce_eager: true
+  enable_chunked_prefill: false

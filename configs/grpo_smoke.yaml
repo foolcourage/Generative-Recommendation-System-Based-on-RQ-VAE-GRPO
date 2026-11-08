@@ -1,0 +1,42 @@
+model_name_or_path: Qwen/Qwen2.5-1.5B-Instruct
+sft_adapter_path: outputs/sft/smoke-qwen2.5-1.5b
+train_file: data/processed/all_beauty/verl_train.parquet
+val_file: data/processed/all_beauty/verl_val.parquet
+output_dir: outputs/grpo/smoke-qwen2.5-1.5b
+reward_function: src/llm4rec/training/rewards.py
+reference_mode: shared_frozen_base
+group_size: 4
+train_batch_size: 2
+ppo_mini_batch_size: 2
+ppo_micro_batch_size_per_gpu: 1
+max_prompt_length: 896
+max_response_length: 96
+max_token_len_per_gpu: 1024
+total_epochs: 1
+total_training_steps: 1
+save_freq: 1
+test_freq: -1
+actor_learning_rate: 0.000005
+kl_loss_coef: 0.01
+entropy_coeff: 0.0
+lora_rank: 8
+lora_alpha: 16
+rollout_gpu_memory_utilization: 0.30
+rollout_max_num_seqs: 4
+temperature: 0.8
+top_p: 0.95
+seed: 42
+logger: console
+memory:
+  # Single-GPU FSDP uses NO_SHARD. PyTorch cannot summon LoRA weights with
+  # offload_to_cpu=True in NO_SHARD mode during actor -> vLLM synchronization.
+  actor_param_offload: false
+  actor_optimizer_offload: true
+  ref_param_offload: true
+  layered_summon: false
+  save_lora_only: true
+  gradient_checkpointing: true
+  remove_padding: false
+  free_cache_engine: true
+  enforce_eager: true
+  enable_chunked_prefill: false
